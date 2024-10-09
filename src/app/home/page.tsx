@@ -1,24 +1,32 @@
 "use client";
 
-import React from 'react';
-import axios from 'axios';
-import { useForm, FormProvider } from 'react-hook-form';
-import { z } from 'zod';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { FormItem, FormControl, FormLabel, FormMessage } from '@/components/ui/form';
-import { useRouter } from 'next/navigation';
-import { socket } from '@/socket';
-import { useUser } from '../contexts/userContext';
+import React from "react";
+import axios from "axios";
+import { useForm, FormProvider } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  FormItem,
+  FormControl,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { useRouter } from "next/navigation";
+import { socket } from "@/socket";
+import { useUser } from "../contexts/userContext";
 
 const formSchema = z.object({
-  roomCode: z.string().min(1, "Room code is required").max(50, "Room code can't exceed 50 characters"),
+  roomCode: z
+    .string()
+    .min(1, "Room code is required")
+    .max(50, "Room code can't exceed 50 characters"),
 });
 
 type FormSchema = z.infer<typeof formSchema>;
 
-type Props = {}
+type Props = {};
 
 export const Page: React.FC<Props> = () => {
   const router = useRouter();
@@ -31,7 +39,11 @@ export const Page: React.FC<Props> = () => {
     },
   });
 
-  const { register, handleSubmit, formState: { errors } } = formMethods;
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = formMethods;
 
   const handleCreateRoom = async () => {
     try {
@@ -42,31 +54,30 @@ export const Page: React.FC<Props> = () => {
         roomCode,
         username,
       });
-        router.push(`/room/${roomCode}`);
-        
-      }catch (error) {
+      router.push(`/room/${roomCode}`);
+    } catch (error) {
       console.error("Error creating room:", error);
       alert("Failed to create a room. Please try again later.");
     }
   };
 
   const onSubmit = async (data: FormSchema) => {
-    try{
+    try {
       await axios.post("http://localhost:3000/rooms/join", {
         roomCode: data.roomCode,
         username,
       });
-    }
-    catch(error){
+    } catch (error) {
       console.error("Error joining room:", error);
       alert("Failed to join room. Please try again later.");
     }
     router.push(`/room/${data.roomCode}`);
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await axios.post("http://localhost:3000/users/delete", { username });
     setUsername("");
-    router.push('/login');
+    router.push("/login");
   };
 
   return (

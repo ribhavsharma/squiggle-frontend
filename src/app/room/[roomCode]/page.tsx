@@ -7,10 +7,12 @@ import { useUser } from "@/app/contexts/userContext";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { socket } from "@/socket";
+import { Chat } from "@/components/Chat";
+import { UserList } from "@/components/UserList";
 
 const RoomPage: React.FC = () => {
   const router = useRouter();
-  const { roomCode } = useParams();
+  const { roomCode } = useParams<{ roomCode: string }>();
   const { username } = useUser();
   const [users, setUsers] = useState<string[]>([]);
   const { toast } = useToast();
@@ -70,20 +72,19 @@ const RoomPage: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto p-8 w-[50%] text-center">
-      <h1 className="text-2xl font-semibold mb-8">Room: {roomCode}</h1>
-      <p>Logged in as: {username}</p>
-      <h2 className="text-xl font-semibold mb-4">Users in this room:</h2>
-      {users.length > 0 ? (
-        <ul>
-          {users.map((user, index) => (
-            <li key={index}>{user}</li>
-          ))}
-        </ul>
-      ) : (
-        <p>No users in this room.</p>
-      )}
-      <Button onClick={handleLeave}>Leave</Button>
+    <div className="flex p-12 h-[100%]">
+      <div className="mx-auto w-[30%] text-center">
+        <h1 className="text-2xl font-semibold mb-8">Room: {roomCode}</h1>
+        <p>Logged in as: {username}</p>
+        <UserList users={users}></UserList>
+      </div>
+      <div className="w-[70%] h-full">
+        <Chat
+          roomCode={roomCode}
+          user={username}
+          leaveHandler={handleLeave}
+        ></Chat>
+      </div>
     </div>
   );
 };
