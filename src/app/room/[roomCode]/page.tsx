@@ -25,25 +25,26 @@ const RoomPage: React.FC = () => {
 
   useEffect(() => {
     if (roomCode) {
-      axios.get(`http://localhost:3000/rooms/${roomCode}`)
+      axios
+        .get(`http://localhost:3000/rooms/${roomCode}`)
         .then((response) => {
           const room = response.data.room;
           setIsHost(room.host === username);
-          setGameStarted(room.gameStarted);  // Fetch gameStarted status from backend
+          setGameStarted(room.gameStarted); // Fetch gameStarted status from backend
           setDrawer(room.currentDrawer);
           setCurrentWord(room.currentWord);
         })
         .catch((error) => {
           console.error("Error fetching room details:", error);
         });
-  
+
       socket.emit("join-room", roomCode, username);
       socket.on("user-joined", (data) => {
         if (data.roomCode === roomCode) {
           fetchUsers();
         }
       });
-  
+
       socket.on("user-left", (data) => {
         if (data.roomCode === roomCode) {
           setUsers((prevUsers) =>
@@ -51,7 +52,7 @@ const RoomPage: React.FC = () => {
           );
         }
       });
-  
+
       socket.on("drawer-assigned", ({ currentDrawer, currentWord }) => {
         setDrawer(currentDrawer);
         setCurrentWord(currentWord);
@@ -62,7 +63,7 @@ const RoomPage: React.FC = () => {
           duration: 8000,
         });
       });
-  
+
       return () => {
         socket.emit("leave-room", roomCode, username);
         socket.off("user-joined");
@@ -100,8 +101,15 @@ const RoomPage: React.FC = () => {
 
   const handleStartGame = async () => {
     try {
-      const assignedDrawer = await axios.post(`http://localhost:3000/rooms/${roomCode}/assign-drawer`)
-      socket.emit("drawer-assigned", roomCode, assignedDrawer.data.drawer, assignedDrawer.data.word);
+      const assignedDrawer = await axios.post(
+        `http://localhost:3000/rooms/${roomCode}/assign-drawer`
+      );
+      socket.emit(
+        "drawer-assigned",
+        roomCode,
+        assignedDrawer.data.drawer,
+        assignedDrawer.data.word
+      );
     } catch (error) {
       console.error("Error starting game:", error);
     }
@@ -111,23 +119,48 @@ const RoomPage: React.FC = () => {
     <div className="flex flex-col md:flex-row p-4 md:p-12 h-screen space-y-4 md:space-y-0">
       {/* Sidebar Section */}
       <div className="mx-auto w-full md:w-1/4 text-center mb-4 md:mb-0 bg-gray-100 p-4 rounded-md shadow-md">
-        <h1 className="text-2xl font-semibold mb-4 md:mb-8">Room: {roomCode}</h1>
-        <p className="mb-4 text-lg">Logged in as: <span className="font-semibold">{username}</span></p>
-        <UserList users={users} drawer = {drawer}/>
-        {!gameStarted && <Button onClick={handleStartGame} disabled={!isHost} className="mt-2 w-full">Start Game</Button>}
+        <h1 className="text-2xl font-semibold mb-4 md:mb-8">
+          Room: {roomCode}
+        </h1>
+        <p className="mb-4 text-lg">
+          Logged in as: <span className="font-semibold">{username}</span>
+        </p>
+        <UserList users={users} drawer={drawer} />
+        {!gameStarted && (
+          <Button
+            onClick={handleStartGame}
+            disabled={!isHost}
+            className="mt-2 w-full"
+          >
+            Start Game
+          </Button>
+        )}
       </div>
 
       {/* Canvas Section */}
-      
+
       <div className="flex flex-col items-center justify-center bg-white p-4 rounded-md shadow-md">
         {username === drawer ? (
           <h1 className="text-2xl font-semibold mb-4">{currentWord}</h1>
         ) : (
-            <h1 className="text-2xl font-semibold mb-4">
-            {"_ ".repeat(currentWord.length).trim()}
-            </h1>
+          <h1 className="text-2xl font-semibold mb-4">
+            {currentWord ? (
+              <h1 className="text-2xl font-semibold mb-4">
+                {username === drawer
+                  ? currentWord
+                  : "_ ".repeat(currentWord.length).trim()}
+              </h1>
+            ) : (
+              <h1 className="text-2xl font-semibold mb-4">
+                No word assigned yet
+              </h1>
+            )}
+          </h1>
         )}
-        <Canvas roomCode={roomCode} isDrawingAllowed={username === drawer}></Canvas>
+        <Canvas
+          roomCode={roomCode}
+          isDrawingAllowed={username === drawer}
+        ></Canvas>
       </div>
 
       {/* Chat Section */}
@@ -136,7 +169,7 @@ const RoomPage: React.FC = () => {
           roomCode={roomCode}
           user={username}
           leaveHandler={handleLeave}
-          canText = {username !== drawer}
+          canText={username !== drawer}
         />
       </div>
     </div>

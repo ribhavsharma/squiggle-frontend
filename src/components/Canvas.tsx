@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useState } from "react";
 import { socket } from "@/socket";
 import { Button } from "@/components/ui/button";
+import axios from "axios";
 
 type Props = {
     roomCode: string;
@@ -17,6 +18,18 @@ export const Canvas = ({ roomCode, isDrawingAllowed }: Props) => {
     if (canvas) {
       ctxRef.current = canvas.getContext("2d");
     }
+
+    axios.post(`http://localhost:3000/rooms/${roomCode}/get-canvas`).then((response) => {
+      const savedCanvasData = response.data.canvasData;
+      if (savedCanvasData) {
+        const ctx = canvasRef.current?.getContext('2d');
+        const img = new Image();
+        img.src = savedCanvasData;
+        img.onload = () => {
+          ctx?.drawImage(img, 0, 0); 
+        };
+      }
+    });
 
     socket.on("draw-data", ({ x, y }: { x: number; y: number }) => {
       const ctx = ctxRef.current;
@@ -77,6 +90,7 @@ export const Canvas = ({ roomCode, isDrawingAllowed }: Props) => {
   const handleMouseUp = () => {
     if (!isDrawingAllowed) return;
     setIsDrawing(false);
+    saveCanvas();
   };
 
   const handleReset = () => {
@@ -87,6 +101,14 @@ export const Canvas = ({ roomCode, isDrawingAllowed }: Props) => {
     }
     socket.emit("resetCanvas", roomCode);
   }
+
+  const saveCanvas = () => {
+    const canvas = canvasRef.current;
+    if (canvas) {
+      const dataURL = canvas.toDataURL(); 
+      axios.post(`http://localhost:3000/rooms/${roomCode}/save-canvas`, { canvasData: dataURL });
+    }
+  };
 
 return (
     <div style={{ position: "relative" }}>
