@@ -83,7 +83,7 @@ export const Canvas = ({ roomCode, isDrawingAllowed }: Props) => {
     if (!isDrawingAllowed) return;
     const ctx = ctxRef.current;
     if (ctx) {
-      ctx.clearRect(0, 0, 800, 600);
+      ctx.clearRect(0, 0, 800, 550);
     }
     socket.emit("resetCanvas", roomCode);
   }
@@ -94,7 +94,7 @@ return (
             id="drawingCanvas"
             className="border border-gray-300 rounded-md"
             width={800}
-            height={600}
+            height={550}
             ref={canvasRef}
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}

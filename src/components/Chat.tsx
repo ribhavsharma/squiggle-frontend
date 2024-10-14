@@ -14,6 +14,7 @@ type ChatProps = {
   roomCode: string;
   user: string;
   leaveHandler: () => void;
+  canText: boolean;
 };
 
 type Message = {
@@ -22,7 +23,7 @@ type Message = {
   username: string;
 };
 
-export function Chat({ roomCode, user, leaveHandler }: ChatProps) {
+export function Chat({ roomCode, user, leaveHandler, canText }: ChatProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
 
@@ -37,6 +38,7 @@ export function Chat({ roomCode, user, leaveHandler }: ChatProps) {
   }, []);
 
   const sendMessage = () => {
+    if(!canText) return;
     if (input.trim()) {
       socket.emit("chatMessage", {
         message: input,
@@ -50,13 +52,13 @@ export function Chat({ roomCode, user, leaveHandler }: ChatProps) {
 
   return (
     <Card className="h-full flex flex-col">
-      <CardHeader className="flex flex-row justify-between">
-        <CardTitle className="text-2xl font-bold w-[50%]">Chat</CardTitle>
-        <Button
-          onClick={leaveHandler}
-          size="icon"
-          className="bg-transparent hover:bg-transparent p-0 focus:ring-0"
-        >
+       <CardHeader className="flex flex-row justify-between items-center">
+    <CardTitle className="text-2xl font-bold">Chat</CardTitle>
+    <Button
+      onClick={leaveHandler}
+      size="icon"
+      className="bg-transparent hover:bg-transparent focus:ring-0"
+    >
           <LogOut className="h-6 w-6" color="#DE6D6D" />
         </Button>
       </CardHeader>
@@ -119,7 +121,7 @@ export function Chat({ roomCode, user, leaveHandler }: ChatProps) {
             onKeyPress={(e) => e.key === "Enter" && sendMessage()}
             className="flex-grow"
           />
-          <Button onClick={sendMessage} size="icon">
+          <Button onClick={sendMessage} disabled={!canText} size="icon">
             <Send className="h-4 w-4" />
             <span className="sr-only">Send</span>
           </Button>
