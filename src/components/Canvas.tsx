@@ -4,9 +4,10 @@ import { Button } from "@/components/ui/button";
 
 type Props = {
     roomCode: string;
+    isDrawingAllowed: boolean;
 };
 
-export const Canvas = ({ roomCode }: Props) => {
+export const Canvas = ({ roomCode, isDrawingAllowed }: Props) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
   const [isDrawing, setIsDrawing] = useState(false);
@@ -47,6 +48,7 @@ export const Canvas = ({ roomCode }: Props) => {
   }, [roomCode]);
 
   const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!isDrawingAllowed) return;
     const ctx = ctxRef.current;
     if (!ctx) return;
 
@@ -58,6 +60,7 @@ export const Canvas = ({ roomCode }: Props) => {
   };
 
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!isDrawingAllowed) return;
     const ctx = ctxRef.current;
     if (!ctx || !isDrawing) return;
 
@@ -72,10 +75,12 @@ export const Canvas = ({ roomCode }: Props) => {
   };
 
   const handleMouseUp = () => {
+    if (!isDrawingAllowed) return;
     setIsDrawing(false);
   };
 
   const handleReset = () => {
+    if (!isDrawingAllowed) return;
     const ctx = ctxRef.current;
     if (ctx) {
       ctx.clearRect(0, 0, 800, 600);

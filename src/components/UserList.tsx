@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 type Props = {
   users: string[];
+  drawer: string;
 };
 
 export const UserList = (props: Props) => {
@@ -11,7 +12,7 @@ export const UserList = (props: Props) => {
     <div>
       <Card>
         <CardHeader>
-          <CardTitle className="text-2xl font-bold">Users</CardTitle>
+          <CardTitle className="text-2xl font-bold flex flex-row">Users</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {props.users.map((user, index) => (
@@ -22,6 +23,9 @@ export const UserList = (props: Props) => {
                 />
               </Avatar>
               <span>{user}</span>
+              {user === props.drawer && (
+                <span className="text-xs text-gray-500">(drawer)</span>
+              )}
             </div>
           ))}
         </CardContent>

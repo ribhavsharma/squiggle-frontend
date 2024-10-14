@@ -16,6 +16,8 @@ const RoomPage: React.FC = () => {
   const { roomCode } = useParams<{ roomCode: string }>();
   const { username } = useUser();
   const [users, setUsers] = useState<string[]>([]);
+  const [drawer, setDrawer] = useState<string>("");
+  const [isDrawingAllowed, setIsDrawingAllowed] = useState<boolean>(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -33,6 +35,22 @@ const RoomPage: React.FC = () => {
           setUsers((prevUsers) =>
             prevUsers.filter((user) => user !== data.username)
           );
+        }
+      });
+
+      socket.on("drawer-assigned", (drawer) => {
+        setDrawer(drawer);
+        toast({
+          title: "Game Started",
+          description: `Drawer is ${drawer}`,
+          duration: 8000,
+        })
+  
+        if (drawer === username) {
+          console.log("you are the drawer");
+          setIsDrawingAllowed(true); 
+        } else {
+          setIsDrawingAllowed(false); 
         }
       });
 
@@ -72,24 +90,28 @@ const RoomPage: React.FC = () => {
     }
   };
 
+  const handleStartGame = async () => {
+    try {
+      const assignedDrawer = await axios.post(`http://localhost:3000/rooms/${roomCode}/assign-drawer`)
+      socket.emit("drawer-assigned", roomCode, assignedDrawer.data.drawer);
+    } catch (error) {
+      console.error("Error starting game:", error);
+    }
+  };
+
   return (
     <div className="flex flex-col md:flex-row p-4 md:p-12 h-screen space-y-4 md:space-y-0">
       {/* Sidebar Section */}
       <div className="mx-auto w-full md:w-1/4 text-center mb-4 md:mb-0 bg-gray-100 p-4 rounded-md shadow-md">
         <h1 className="text-2xl font-semibold mb-4 md:mb-8">Room: {roomCode}</h1>
         <p className="mb-4 text-lg">Logged in as: <span className="font-semibold">{username}</span></p>
-        <UserList users={users} />
-        <Button
-          className="mt-4 w-full bg-red-500 hover:bg-red-600 text-white"
-          onClick={handleLeave}
-        >
-          Leave Room
-        </Button>
+        <UserList users={users} drawer = {drawer}/>
+        <Button onClick={handleStartGame} className="mt-2 w-full">Start Game</Button>
       </div>
 
       {/* Canvas Section */}
       <div className="flex-grow flex items-center justify-center bg-white p-4 rounded-md shadow-md">
-        <Canvas roomCode={roomCode}></Canvas>
+        <Canvas roomCode={roomCode} isDrawingAllowed = {isDrawingAllowed}></Canvas>
       </div>
 
       {/* Chat Section */}
