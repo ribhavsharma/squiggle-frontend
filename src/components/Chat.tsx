@@ -49,7 +49,7 @@ export function Chat({ roomCode, user, leaveHandler }: ChatProps) {
   };
 
   return (
-    <Card className="w-full mx-auto">
+    <Card className="h-full flex flex-col">
       <CardHeader className="flex flex-row justify-between">
         <CardTitle className="text-2xl font-bold w-[50%]">Chat</CardTitle>
         <Button
@@ -60,8 +60,9 @@ export function Chat({ roomCode, user, leaveHandler }: ChatProps) {
           <LogOut className="h-6 w-6" color="#DE6D6D" />
         </Button>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <ScrollArea className="h-[500px] w-full pr-4">
+      <CardContent className="flex flex-col flex-grow overflow-hidden">
+        {/* Chat Messages Scrollable Area */}
+        <ScrollArea className="flex-grow pr-4 mb-4 overflow-y-auto">
           {messages.map((message, index) => (
             <div
               key={index}
@@ -107,6 +108,8 @@ export function Chat({ roomCode, user, leaveHandler }: ChatProps) {
             </div>
           ))}
         </ScrollArea>
+
+        {/* Input Section */}
         <div className="flex items-center space-x-2">
           <Input
             type="text"
@@ -114,6 +117,7 @@ export function Chat({ roomCode, user, leaveHandler }: ChatProps) {
             onChange={(e) => setInput(e.target.value)}
             placeholder="Type a message..."
             onKeyPress={(e) => e.key === "Enter" && sendMessage()}
+            className="flex-grow"
           />
           <Button onClick={sendMessage} size="icon">
             <Send className="h-4 w-4" />

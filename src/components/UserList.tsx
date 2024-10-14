@@ -9,7 +9,7 @@ type Props = {
 export const UserList = (props: Props) => {
   return (
     <div>
-      <Card className="w-[50%] max-w-md mx-auto h-[400px] my-4">
+      <Card>
         <CardHeader>
           <CardTitle className="text-2xl font-bold">Users</CardTitle>
         </CardHeader>
