@@ -1,6 +1,7 @@
 import React from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import NumberFlow from "@number-flow/react";
 
 type Props = {
   users: string[];
@@ -12,7 +13,9 @@ export const UserList = (props: Props) => {
     <div>
       <Card>
         <CardHeader>
-          <CardTitle className="text-2xl font-bold flex flex-row">Users</CardTitle>
+          <CardTitle className="text-2xl font-bold flex flex-row">
+            Users
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {props.users.map((user, index) => (
@@ -26,6 +29,11 @@ export const UserList = (props: Props) => {
               {user === props.drawer && (
                 <span className="text-xs text-gray-500">(drawer)</span>
               )}
+              <NumberFlow
+                value={1000}
+                format={{ notation: "compact" }} // Intl.NumberFormat options
+                locales="en-US" // Intl.NumberFormat locales
+              />
             </div>
           ))}
         </CardContent>

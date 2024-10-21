@@ -18,6 +18,10 @@ const RoomPage: React.FC = () => {
   const [users, setUsers] = useState<string[]>([]);
   const [drawer, setDrawer] = useState<string>("");
   const [gameStarted, setGameStarted] = useState<boolean>(false);
+  const [canText, setCanText] = useState<boolean>(true);
+  const [currentRound, setCurrentRound] = useState<number>(1);
+  const [maxRounds, setMaxRounds] = useState<number>(5);
+  const [remainingTime, setRemainingTime] = useState<number | undefined>(undefined);
 
   const [isHost, setIsHost] = useState<boolean>(false);
   const [currentWord, setCurrentWord] = useState<string>("");
@@ -30,8 +34,9 @@ const RoomPage: React.FC = () => {
         .then((response) => {
           const room = response.data.room;
           setIsHost(room.host === username);
-          setGameStarted(room.gameStarted); // Fetch gameStarted status from backend
+          setGameStarted(room.gameStarted); 
           setDrawer(room.currentDrawer);
+          setCanText(room.currentDrawer !== username);
           setCurrentWord(room.currentWord);
         })
         .catch((error) => {
@@ -43,6 +48,15 @@ const RoomPage: React.FC = () => {
         if (data.roomCode === roomCode) {
           fetchUsers();
         }
+      });
+
+      socket.on("timer-update", ({ remainingTime }) => {
+        setRemainingTime(remainingTime);
+      });
+  
+      socket.on("timer-ended", ({ roomCode }) => {
+        console.log(`Timer for room ${roomCode} has ended.`);
+        setRemainingTime(0);
       });
 
       socket.on("user-left", (data) => {
@@ -64,10 +78,41 @@ const RoomPage: React.FC = () => {
         });
       });
 
+      socket.on("correct-guess", (user: string) => {
+        if (user === username) {
+          setCanText(false);
+        }
+      });
+
+      socket.on("next-round", ({ currentRound, currentDrawer, currentWord }) => {
+        setCurrentRound(currentRound);
+        setDrawer(currentDrawer);
+        setCurrentWord(currentWord);
+        setCanText(currentDrawer !== username);
+      });
+
+      socket.on("game-ended", () => {
+        toast({
+          title: "Game Over",
+          description: "The game has ended!",
+        });
+        setGameStarted(false);
+        setCurrentRound(1);
+        setDrawer("");
+        setCurrentWord("");
+        setCanText(true);
+      });
+
       return () => {
         socket.emit("leave-room", roomCode, username);
         socket.off("user-joined");
         socket.off("user-left");
+        socket.off("drawer-assigned");
+        socket.off("correct-guess");
+        socket.off("next-round");
+        socket.off("game-ended");
+        socket.off("timer-update");
+        socket.off("timer-ended");
         setUsers([]);
       };
     }
@@ -101,14 +146,9 @@ const RoomPage: React.FC = () => {
 
   const handleStartGame = async () => {
     try {
-      const assignedDrawer = await axios.post(
-        `http://localhost:3000/rooms/${roomCode}/assign-drawer`
-      );
       socket.emit(
-        "drawer-assigned",
-        roomCode,
-        assignedDrawer.data.drawer,
-        assignedDrawer.data.word
+        "start-game",
+        roomCode
       );
     } catch (error) {
       console.error("Error starting game:", error);
@@ -120,8 +160,19 @@ const RoomPage: React.FC = () => {
       {/* Sidebar Section */}
       <div className="mx-auto w-full md:w-1/4 text-center mb-4 md:mb-0 bg-gray-100 p-4 rounded-md shadow-md">
         <h1 className="text-2xl font-semibold mb-4 md:mb-8">
-          Room: {roomCode}
+          Room: {roomCode} <br />
+          Round: {currentRound}/{maxRounds}
+
         </h1>
+
+        <div className="timer">
+        {remainingTime !== null ? (
+          <h2>Time Remaining: {remainingTime} seconds</h2>
+        ) : (
+          <h2>Loading timer...</h2>
+        )}
+      </div>
+
         <p className="mb-4 text-lg">
           Logged in as: <span className="font-semibold">{username}</span>
         </p>
@@ -151,9 +202,7 @@ const RoomPage: React.FC = () => {
                   : "_ ".repeat(currentWord.length).trim()}
               </h1>
             ) : (
-              <h1 className="text-2xl font-semibold mb-4">
-                No word assigned yet
-              </h1>
+              <></>
             )}
           </h1>
         )}
@@ -169,7 +218,8 @@ const RoomPage: React.FC = () => {
           roomCode={roomCode}
           user={username}
           leaveHandler={handleLeave}
-          canText={username !== drawer}
+          canText={canText}
+          currentWord={currentWord}
         />
       </div>
     </div>

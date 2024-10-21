@@ -15,6 +15,7 @@ type ChatProps = {
   user: string;
   leaveHandler: () => void;
   canText: boolean;
+  currentWord: string;
 };
 
 type Message = {
@@ -23,7 +24,13 @@ type Message = {
   username: string;
 };
 
-export function Chat({ roomCode, user, leaveHandler, canText }: ChatProps) {
+export function Chat({
+  roomCode,
+  user,
+  leaveHandler,
+  canText,
+  currentWord,
+}: ChatProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
 
@@ -32,13 +39,24 @@ export function Chat({ roomCode, user, leaveHandler, canText }: ChatProps) {
       setMessages((prevMessages) => [...prevMessages, messageData]);
     });
 
+    socket.on("correct-guess", (username: string) => {
+      setMessages((prevMessages) => [
+        ...prevMessages,
+        {
+          message: `${username} has guessed the word!`,
+          timestamp: new Date(),
+          username: "System",
+        },
+      ]);
+    });
+
     return () => {
       socket.off("message");
     };
   }, []);
 
   const sendMessage = () => {
-    if(!canText) return;
+    if (!canText) return;
     if (input.trim()) {
       socket.emit("chatMessage", {
         message: input,
@@ -46,19 +64,20 @@ export function Chat({ roomCode, user, leaveHandler, canText }: ChatProps) {
         roomCode: roomCode,
         username: user,
       });
+
       setInput("");
     }
   };
 
   return (
     <Card className="h-full flex flex-col">
-       <CardHeader className="flex flex-row justify-between items-center">
-    <CardTitle className="text-2xl font-bold">Chat</CardTitle>
-    <Button
-      onClick={leaveHandler}
-      size="icon"
-      className="bg-transparent hover:bg-transparent focus:ring-0"
-    >
+      <CardHeader className="flex flex-row justify-between items-center">
+        <CardTitle className="text-2xl font-bold">Chat</CardTitle>
+        <Button
+          onClick={leaveHandler}
+          size="icon"
+          className="bg-transparent hover:bg-transparent focus:ring-0"
+        >
           <LogOut className="h-6 w-6" color="#DE6D6D" />
         </Button>
       </CardHeader>
@@ -69,43 +88,45 @@ export function Chat({ roomCode, user, leaveHandler, canText }: ChatProps) {
             <div
               key={index}
               className={`flex items-start space-x-2 mb-4 ${
-                message.username === user ? "justify-end" : "justify-start"
+              message.username === user ? "justify-end" : "justify-start"
               }`}
             >
-              {message.username !== user && (
-                <Avatar className="h-8 w-8">
-                  <AvatarImage
-                    src={`https://api.dicebear.com/6.x/initials/svg?seed=${message.username}`}
-                  />
-                  <AvatarFallback>
-                    {message.username[0].toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
+              {message.username !== user && message.username !== "System" && (
+              <Avatar className="h-8 w-8">
+                <AvatarImage
+                src={`https://api.dicebear.com/6.x/initials/svg?seed=${message.username}`}
+                />
+                <AvatarFallback>
+                {message.username[0].toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
               )}
               <div
-                className={`max-w-[70%] rounded-lg p-3 min-w-[20%] ${
-                  message.username === user
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-secondary text-secondary-foreground"
-                }`}
+              className={`rounded-lg p-3 min-w-[20%] ${
+                message.username === user
+                ? "bg-primary text-primary-foreground"
+                : message.username === "System"
+                ? "bg-green-500 text-white w-full"
+                : "bg-secondary text-secondary-foreground"
+              }`}
               >
-                <div className="flex flex-col items-start">
-                  <span className="font-semibold text-sm">
-                    {message.username}
-                  </span>
-                  <p className="mt-1">{message.message}</p>
-                  <span className="text-xs opacity-70 mt-2 self-end">
-                    {new Date(message.timestamp).toLocaleTimeString()}
-                  </span>
-                </div>
+              <div className="flex flex-col items-start">
+                <span className="font-semibold text-sm">
+                {message.username}
+                </span>
+                <p className="mt-1">{message.message}</p>
+                <span className="text-xs opacity-70 mt-2 self-end">
+                {new Date(message.timestamp).toLocaleTimeString()}
+                </span>
+              </div>
               </div>
               {message.username === user && (
-                <Avatar className="h-8 w-8">
-                  <AvatarImage
-                    src={`https://api.dicebear.com/6.x/initials/svg?seed=${user}`}
-                  />
-                  <AvatarFallback>{user[0].toUpperCase()}</AvatarFallback>
-                </Avatar>
+              <Avatar className="h-8 w-8">
+                <AvatarImage
+                src={`https://api.dicebear.com/6.x/initials/svg?seed=${user}`}
+                />
+                <AvatarFallback>{user[0].toUpperCase()}</AvatarFallback>
+              </Avatar>
               )}
             </div>
           ))}
